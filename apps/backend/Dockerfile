@@ -10,6 +10,9 @@ RUN apt-get update \
         bash \
         gnupg \
         ca-certificates \
+        build-essential \
+        pkg-config \
+        libssl-dev \
     && curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' \
         | gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" \
