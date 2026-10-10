@@ -27,6 +27,14 @@ fronted by Cloudflare Tunnel (no public ingress ports).
   `ssh -i ~/.ssh/restack_vm -p 2229 ubuntu@127.0.0.1`
 
 ## App environment (set before `prod:up`)
+> `.env.example` targets local dev (app on host, infra in Docker) and
+> uses `localhost` for database hosts. Under `prod:up` the backend also
+> runs in Docker, so point the URLs at compose service names or the
+> backend waits on PostgreSQL forever and every workflow (including
+> sign-in) times out after 30s:
+> `DATABASE_URL=...@postgres:5432/...`,
+> `CLICKHOUSE_URL=...@clickhouse:8123/...`,
+> `COCKROACHDB_URL=...@cockroachdb:26257/...`.
 
 - `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` — generated with
   `openssl rand -base64 32`, stored in `pass` at
