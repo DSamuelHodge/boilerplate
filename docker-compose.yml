@@ -118,6 +118,16 @@ services:
       - RESTACK_ENGINE_STREAM_ADDRESS=${RESTACK_ENGINE_STREAM_ADDRESS:-restack:9233}
       - NO_COLOR=1
       - PYTHONUNBUFFERED=1
+      # Temporary leak diagnostic (remove with ops/fd-debug):
+      - FD_DEBUG=1
+    # Mitigate fd-exhaustion (unclosed asyncio loops) until the leak is fixed
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      # Temporary loop-creation tracer (read-only, remove after diagnosis)
+      - ./ops/fd-debug/sitecustomize.py:/app/.venv/lib/python3.12/site-packages/sitecustomize.py:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -148,6 +158,11 @@ services:
       - RESTACK_ENGINE_STREAM_ADDRESS=${RESTACK_ENGINE_STREAM_ADDRESS:-restack:9233}
       - NO_COLOR=1
       - PYTHONUNBUFFERED=1
+    # Mitigate fd-exhaustion until the leak is fixed (same worker family)
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       backend:
         condition: service_started
@@ -180,6 +195,11 @@ services:
       - RESTACK_ENGINE_ADDRESS=${RESTACK_ENGINE_ADDRESS:-restack:7233}
       - RESTACK_ENGINE_API_ADDRESS=${RESTACK_ENGINE_API_ADDRESS:-restack:6233}
       - RESTACK_ENGINE_STREAM_ADDRESS=${RESTACK_ENGINE_STREAM_ADDRESS:-restack:9233}
+    # Mitigate fd-exhaustion until the leak is fixed (same worker family)
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       backend:
         condition: service_started
