@@ -96,6 +96,7 @@ export default function IntegrationsPage() {
 
       if (result.success) {
         fetchMcpServers(); // Refresh the list to update connection counts
+        setAddTokenDialogOpen(false);
       }
     } catch (error) {
       console.error("Failed to save bearer token:", error);
@@ -173,7 +174,6 @@ export default function IntegrationsPage() {
         server={selectedServer}
         onStartOAuth={handleOAuthConnect}
         onSaveBearerToken={handleBearerTokenSave}
-        defaultTab="oauth"
       />
     </div>
   );

@@ -536,7 +536,7 @@ async def get_workspace_openai_api_key(
         try:
             server_query = select(McpServer).where(
                 McpServer.workspace_id == uuid.UUID(workspace_id),
-                McpServer.server_label == "OpenAI",
+                func.lower(McpServer.server_label) == "openai",
             )
             server_result = await db.execute(server_query)
             openai_server = server_result.scalar_one_or_none()

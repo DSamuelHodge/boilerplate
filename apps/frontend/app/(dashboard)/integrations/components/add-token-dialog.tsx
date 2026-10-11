@@ -35,9 +35,11 @@ function initialAuthTab(
   server: McpServer | null,
   defaultTab: AddTokenDialogProps["defaultTab"],
 ): "oauth" | "bearer" {
+  // Local integrations (OpenAI) have no server_url and only support bearer keys.
+  // Never open the OAuth tab for them even if a parent forces defaultTab="oauth".
+  if (!server?.server_url) return "bearer";
   if (defaultTab) return defaultTab;
-  if (server?.server_url) return "oauth";
-  return "bearer";
+  return "oauth";
 }
 
 export function AddTokenDialog({
