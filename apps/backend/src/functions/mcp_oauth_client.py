@@ -47,13 +47,14 @@ async def register_oauth_client(
         raise OAuthRegistrationError(error_message)
 
     # Prepare client registration data
+    # Omit scope: providers (PhantomBuster, GitHub, Google, etc.) reject
+    # unknown scopes with invalid_scope. Scope is requested at authorize time.
     registration_data = {
         "client_name": f"MCP Client for {server_label}",
         "redirect_uris": [f"{base_url}/oauth/callback"],
         "grant_types": ["authorization_code", "refresh_token"],
         "response_types": ["code"],
         "token_endpoint_auth_method": "client_secret_basic",
-        "scope": "openid profile",
     }
 
     try:
@@ -523,18 +524,25 @@ def create_client_metadata(
     workspace_id: str,
     server_label: str,
     redirect_uri: str,
+    scopes: str | None = None,
 ) -> OAuthClientMetadata:
     """Create deterministic OAuth client metadata."""
     deterministic_client_name = (
         f"MCP-Client-{user_id}-{workspace_id}-{server_label}"
     )
 
+    # Core fix: default to omitting scope. No real MCP provider uses
+    # "read_content update_content" - PhantomBuster, GitHub, Google Drive etc.
+    # all reject it with invalid_scope. Pass headers {"scopes": "..."} only
+    # when a provider documents specific scopes; "" or None both omit.
+    resolved_scope = "" if scopes is None else scopes.strip()
+
     return OAuthClientMetadata(
         client_name=deterministic_client_name,
         redirect_uris=[AnyUrl(redirect_uri)],
         grant_types=["authorization_code", "refresh_token"],
         response_types=["code"],
-        scope="read_content update_content",
+        scope=resolved_scope,
     )
 
 
@@ -682,6 +690,7 @@ async def oauth_generate_auth_url(
             function_input.workspace_id,
             function_input.server_label,
             function_input.redirect_uri,
+            function_input.scopes,
         )
 
         _validate_redirect_uri(
@@ -743,6 +752,12 @@ async def oauth_generate_auth_url(
             and function_input.oauth_token_url
         ):
             # Use pre-configured client credentials
+            # None/empty means omit scope entirely.
+            _resolved_scope = (
+                ""
+                if function_input.scopes is None
+                else function_input.scopes.strip()
+            )
             auth_params = {
                 "response_type": "code",
                 "client_id": client_id,
@@ -750,9 +765,9 @@ async def oauth_generate_auth_url(
                 "state": state,
                 "code_challenge": pkce_params.code_challenge,
                 "code_challenge_method": "S256",
-                "scope": function_input.scopes
-                or "read_content update_content",
             }
+            if _resolved_scope:
+                auth_params["scope"] = _resolved_scope
 
             authorization_url = f"{authorization_endpoint}?{urlencode(auth_params)}"
 
@@ -810,12 +825,15 @@ async def oauth_generate_auth_url(
                 "state": state,
                 "code_challenge": pkce_params.code_challenge,
                 "code_challenge_method": "S256",
-                "scope": client_metadata.scope or "",
                 # RFC 8707: Include resource parameter for better authorization scoping
                 "resource": resource_url_from_server_url(
                     function_input.server_url
                 ),
             }
+            # Omit scope entirely when empty - many providers (e.g. PhantomBuster)
+            # reject unknown scopes with invalid_scope.
+            if client_metadata.scope:
+                auth_params["scope"] = client_metadata.scope
 
             authorization_url = (
                 f"{auth_endpoint}?{urlencode(auth_params)}"
@@ -952,6 +970,10 @@ async def _register_new_client_and_prepare_token_data(
         mode="json",
         exclude_none=True,
     )
+    # Never send placeholder scopes at registration time.
+    _scope_val = str(registration_data.get("scope", "") or "").strip()
+    if not _scope_val or _scope_val == "read_content update_content":
+        registration_data.pop("scope", None)
 
     reg_response = await client.post(
         str(registration_endpoint), json=registration_data
@@ -1008,7 +1030,7 @@ async def oauth_exchange_code_for_token(
             redirect_uris=[AnyUrl(function_input.redirect_uri)],
             grant_types=["authorization_code", "refresh_token"],
             response_types=["code"],
-            scope="read_content update_content",
+            scope="",
         )
 
         # Direct token exchange using OAuth discovery and client credentials
