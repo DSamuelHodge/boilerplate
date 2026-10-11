@@ -17,12 +17,12 @@ class Config:
     SLACK_EVENT_MODE: str = os.getenv("SLACK_EVENT_MODE", "socket")
     SLACK_CLIENT_ID: str | None = os.getenv("SLACK_CLIENT_ID")
     SLACK_CLIENT_SECRET: str | None = os.getenv("SLACK_CLIENT_SECRET")
-    SLACK_HTTP_BASE_URL: str = os.getenv("SLACK_HTTP_BASE_URL", "http://localhost:3002")
+    SLACK_HTTP_BASE_URL: str = os.getenv("SLACK_HTTP_BASE_URL", "https://slack-restack.hodgeluke.com")
     SLACK_ROUTER_API_KEY: str | None = os.getenv("SLACK_ROUTER_API_KEY")
     HTTP_PORT: int = int(os.getenv("SLACK_HTTP_PORT", "3002"))
 
     DEFAULT_WORKSPACE_ID: str | None = os.getenv("DEFAULT_WORKSPACE_ID")
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://restack.hodgeluke.com")
 
     RESTACK_ENGINE_ID: str | None = os.getenv("RESTACK_ENGINE_ID")
     RESTACK_ENGINE_ADDRESS: str | None = os.getenv("RESTACK_ENGINE_ADDRESS")

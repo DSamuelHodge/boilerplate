@@ -22,6 +22,7 @@ fronted by Cloudflare Tunnel (no public ingress ports).
   - `ssh-restack.hodgeluke.com` → `ssh://localhost:22`
   - `restack.hodgeluke.com` → `http://localhost:3000` (Next.js frontend)
   - `mcp-restack.hodgeluke.com` → `http://localhost:11233` (`/mcp` endpoint)
+  - `slack-restack.hodgeluke.com` → `http://localhost:3002` (slack-bot HTTP receiver: OAuth callback + events)
 - SSH over tunnel: `cloudflared access tcp --hostname
   ssh-restack.hodgeluke.com --url 127.0.0.1:2229`, then
   `ssh -i ~/.ssh/restack_vm -p 2229 ubuntu@127.0.0.1`
@@ -42,6 +43,16 @@ fronted by Cloudflare Tunnel (no public ingress ports).
   before the frontend image build (runtime-only injection breaks server actions).
 - `RESTACK_ENGINE_MCP_ADDRESS=https://mcp-restack.hodgeluke.com`
   — OpenAI tool calls cannot use localhost.
+- `SLACK_HTTP_BASE_URL=https://slack-restack.hodgeluke.com` — the
+  Slack OAuth `redirect_uri` (`…/slack/oauth/callback`) is built from
+  this. The old default (`http://localhost:3002`) made Slack bounce
+  the browser to localhost, so "Add to Slack" never completed.
+  `FRONTEND_URL=https://restack.hodgeluke.com` is the post-OAuth
+  return target. Both are also the baked-in defaults in
+  `apps/slack-bot/src/config.py` and `docker-compose.yml` (slack-bot).
+  After starting the bot, register
+  `https://slack-restack.hodgeluke.com/slack/oauth/callback` under
+  the Slack app's OAuth & Permissions → Redirect URLs.
 
 ## ARM build note
 
