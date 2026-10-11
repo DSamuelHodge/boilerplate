@@ -743,8 +743,12 @@ async def oauth_generate_auth_url(
             )
             _raise_no_registration_endpoint_error(msg)
 
-        # Generate state for CSRF protection
-        state = secrets.token_urlsafe(32)
+        # Signed state binds user/workspace/server so the callback CSRF check passes.
+        state = _create_signed_state(
+            function_input.user_id,
+            function_input.workspace_id,
+            function_input.server_label,
+        )
 
         # Path 1: Explicit OAuth configuration (skip discovery and registration)
         if (
@@ -816,7 +820,11 @@ async def oauth_generate_auth_url(
             auth_endpoint = str(
                 oauth_metadata.authorization_endpoint
             )
-            state = secrets.token_urlsafe(32)
+            state = _create_signed_state(
+                function_input.user_id,
+                function_input.workspace_id,
+                function_input.server_label,
+            )
 
             auth_params = {
                 "response_type": "code",
