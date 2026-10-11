@@ -259,7 +259,9 @@ services:
       context: .
       dockerfile: ./apps/frontend/Dockerfile
       args:
-        RESTACK_ENGINE_STREAM_ADDRESS: ${NEXT_PUBLIC_RESTACK_ENGINE_API_ADDRESS:-${RESTACK_ENGINE_STREAM_ADDRESS:-http://localhost:9233}}
+        # Dockerfile ARG is RESTACK_ENGINE_API_ADDRESS (baked into NEXT_PUBLIC_*).
+        # Browser SSE for agent streaming cannot use localhost in production.
+        RESTACK_ENGINE_API_ADDRESS: ${NEXT_PUBLIC_RESTACK_ENGINE_API_ADDRESS:-${RESTACK_ENGINE_STREAM_ADDRESS:-http://localhost:9233}}
         POSTHOG_KEY: ${NEXT_PUBLIC_POSTHOG_KEY:-${POSTHOG_KEY:-}}
         POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST:-${POSTHOG_HOST:-}}
     container_name: boilerplate_frontend
